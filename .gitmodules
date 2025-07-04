@@ -1,4 +1,4 @@
 [submodule "MyCSharpServer"]
 	branch = master
-	path = MyCSharpServer
+	path = libs/MyCSharpServer
 	url = https://github.com/asv23/MyCSharpServer
