@@ -1,4 +1,8 @@
-[submodule "MyCSharpServer"]
-	branch = master
+[submodule "libs/MyCSharpServer"]
 	path = libs/MyCSharpServer
 	url = https://github.com/asv23/MyCSharpServer
+	branch = master
+[submodule "libs/MyPyServer"]
+	path = libs/MyPyServer
+	url = https://github.com/asv23/MyPyServer
+	branch = master
