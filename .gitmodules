@@ -1,0 +1,3 @@
+[submodule "MyCSharpServer"]
+	path = MyCSharpServer
+	url = https://github.com/asv23/MyCSharpServer
