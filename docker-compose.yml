@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   aspnet-service:
-    image: aspnet-swarm-test
+    image: 192.168.10.182:5000/aspnet-swarm-test
     deploy:
       placement:
         constraints:
@@ -16,7 +16,7 @@ services:
           - node.labels.type == fastapi
 
   nginx-service:
-    image: nginx:latest
+    image: 192.168.10.182:5000/nginx:latest
     ports:
       - "80:80"
     volumes:
