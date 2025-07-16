@@ -4,6 +4,16 @@ SUBMODULES_DIR := libs
 COMPOSE_FILE := docker-compose.yml
 STACK_NAME := nginxstack
 
+DOCKER_BUILDKIT ?= 1
+
+# Путь к сабмодулям
+FASTAPI_PATH ?= ./libs/MyPyServer
+ASPNET_PATH ?= ./libs/MyCSharpServer
+
+# Названия образов
+FASTAPI_IMAGE_NAME ?= fastapi-swarm-test
+ASPNET_IMAGE_NAME ?= aspnet-swarm-test
+
 # Цветной вывод для удобства
 # GREEN := \033[0;32m
 # RED := \033[0;31m
@@ -20,40 +30,19 @@ help:
 	@echo "  make stop-service        - Остановить перечисленные службы (укажите SERVICE_LIST)"
 	@echo "Пример: make stop-service stack_name SERVICE_LIST='service1 service2'"
 
-# Сборка образов из подмодулей
-.PHONY: build-submodules
-build-submodules:
-	@echo "Сборка образов из подмодулей..."
-	@for dir in $(SUBMODULES_DIR)/*; do \
-		echo "Путь $$dir"; \
-		if [ -d "$$dir" ] && [ -f "$$dir/docker-compose.yml" ]; then \
-			echo "Сборка образа для $$dir..."; \
-			image_name=$$(grep 'image:' "$$dir/docker-compose.yml" | head -1 | awk '{print $\$2}' | sed 's|${REGISTRY}/||' | sed 's|$$(REGISTRY)/||'); \
-			echo "Image $$image_name"; \
-			if [ -z "$$image_name" ]; then \
-				echo "Ошибка: Не удалось извлечь image_name для $$dir"; \
-				exit 1; \
-			fi; \
-			REGISTRY=$(REGISTRY) docker compose -f "$$dir/docker-compose.yml" build --no-cache || { echo "Ошибка сборки для $$dir"; exit 1; }; \
-		elif [ -d "$$dir" ]; then \
-			echo "Путь: $$dir (docker-compose.yml не найден)"; \
-		fi; \
-	done
-	@echo "Сборка завершена."
-
-# Загрузка образов в локальный registry
-.PHONY: push-submodules
-push-submodules:
-	@if ! docker images --format '{{.Repository}}:{{.Tag}}' --filter=reference='$(REGISTRY)/*' | grep -q .; then \
-		echo "Ошибка: Нет образов для загрузки в $(REGISTRY)"; \
-		exit 1; \
+# Сборка buildx
+.PHONY: buildx-push
+buildx-push:
+	@echo "Сборка образов Docker Buildx..."
+	@if [ -z "$(REGISTRY)"]; then \
+		echo "Сборка без REGISTRY"; \
+		DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) docker buildx build --tag $(FASTAPI_IMAGE_NAME) $(FASTAPI_PATH) --file $(FASTAPI_PATH)/Dockerfile; \
+		DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) docker buildx build --tag $(ASPNET_IMAGE_NAME) $(ASPNET_PATH) --file $(ASPNET_PATH)/Dockerfile; \
+	else \
+		echo "Сборка с REGISTRY"; \
+		DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) docker buildx build --tag $(REGISTRY)/$(FASTAPI_IMAGE_NAME) $(FASTAPI_PATH) --file $(FASTAPI_PATH)/Dockerfile --push; \
+		DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) docker buildx build --tag $(REGISTRY)/$(ASPNET_IMAGE_NAME) $(ASPNET_PATH) --file $(ASPNET_PATH)/Dockerfile --push; \
 	fi
-	@docker images --format '{{.Repository}}:{{.Tag}}' --filter=reference='$(REGISTRY)/*' | \
-	while read image; do \
-		echo "Загрузка: $$image"; \
-		docker push "$$image" || exit 1; \
-	done
-	@echo "✅ Все образы успешно загружены в $(REGISTRY)"
 
 # Запуск всех сервисов стэка
 .PHONY: stack-deploy
