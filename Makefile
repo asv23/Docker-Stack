@@ -1,18 +1,9 @@
 # Переменные
 REGISTRY := 192.168.10.182:5000
-SUBMODULES_DIR := libs
 COMPOSE_FILE := docker-compose.yml
 STACK_NAME := nginxstack
 
 DOCKER_BUILDKIT ?= 1
-
-# Путь к сабмодулям
-FASTAPI_PATH ?= ./libs/MyPyServer
-ASPNET_PATH ?= ./libs/MyCSharpServer
-
-# Названия образов
-FASTAPI_IMAGE_NAME ?= fastapi-swarm-test
-ASPNET_IMAGE_NAME ?= aspnet-swarm-test
 
 # Цветной вывод для удобства
 # GREEN := \033[0;32m
@@ -23,8 +14,7 @@ ASPNET_IMAGE_NAME ?= aspnet-swarm-test
 .PHONY: help
 help:
 	@echo "Доступные команды:"
-	@echo "  make build-submodules    - Собрать образы из подмодулей"
-	@echo "  make push-submodules     - Загрузить образы в локальный registry"
+	@echo "  make buildx-push    - Собрать и загрузить образы из подмодулей в локальный registry (если указан)"
 	@echo "  make stack-deploy        - Запустить все сервисы стэка"
 	@echo "  make stack-down          - Остановить все сервисы стэка"
 	@echo "  make stop-service        - Остановить перечисленные службы (укажите SERVICE_LIST)"
@@ -36,12 +26,10 @@ buildx-push:
 	@echo "Сборка образов Docker Buildx..."
 	@if [ -z "$(REGISTRY)"]; then \
 		echo "Сборка без REGISTRY"; \
-		DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) docker buildx build --tag $(FASTAPI_IMAGE_NAME) $(FASTAPI_PATH) --file $(FASTAPI_PATH)/Dockerfile; \
-		DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) docker buildx build --tag $(ASPNET_IMAGE_NAME) $(ASPNET_PATH) --file $(ASPNET_PATH)/Dockerfile; \
+		DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) docker buildx bake all; \
 	else \
 		echo "Сборка с REGISTRY"; \
-		DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) docker buildx build --tag $(REGISTRY)/$(FASTAPI_IMAGE_NAME) $(FASTAPI_PATH) --file $(FASTAPI_PATH)/Dockerfile --push; \
-		DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) docker buildx build --tag $(REGISTRY)/$(ASPNET_IMAGE_NAME) $(ASPNET_PATH) --file $(ASPNET_PATH)/Dockerfile --push; \
+		DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) docker buildx bake --push all; \
 	fi
 
 # Запуск всех сервисов стэка
