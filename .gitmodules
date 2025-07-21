@@ -1,8 +1,8 @@
 [submodule "libs/MyCSharpServer"]
 	path = libs/MyCSharpServer
 	url = https://github.com/asv23/MyCSharpServer
-	branch = feature/docker-swarm
+	branch = develop
 [submodule "libs/MyPyServer"]
 	path = libs/MyPyServer
 	url = https://github.com/asv23/MyPyServer
-	branch = feature/docker-swarm
+	branch = develop
